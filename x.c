@@ -259,8 +259,8 @@ clipcopy(const Arg *dummy)
 {
 	Atom clipboard;
 
-	if (xsel.clipboard != NULL)
-		free(xsel.clipboard);
+	free(xsel.clipboard);
+	xsel.clipboard = NULL;
 
 	if (xsel.primary != NULL) {
 		xsel.clipboard = xstrdup(xsel.primary);
@@ -642,6 +642,9 @@ selrequest(XEvent *e)
 void
 setsel(char *str, Time t)
 {
+	if (!str)
+		return;
+
 	free(xsel.primary);
 	xsel.primary = str;
 
@@ -1514,7 +1517,7 @@ void
 xsettitle(char *p)
 {
 	XTextProperty prop;
-	DEFAULT(p, "st");
+	DEFAULT(p, opt_title);
 
 	Xutf8TextListToTextProperty(xw.dpy, &p, 1, XUTF8StringStyle,
 			&prop);
@@ -2004,12 +2007,12 @@ main(int argc, char *argv[])
 	} ARGEND;
 
 run:
-	if (argc > 0) {
-		/* eat all remaining arguments */
+	if (argc > 0) /* eat all remaining arguments */
 		opt_cmd = argv;
-		if (!opt_title && !opt_line)
-			opt_title = basename(xstrdup(argv[0]));
-	}
+
+	if (!opt_title)
+		opt_title = (opt_line || !opt_cmd) ? "st" : opt_cmd[0];
+
 	setlocale(LC_CTYPE, "");
 	XSetLocaleModifiers("");
 
